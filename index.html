@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatroom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .chat-container {
+            width: 80%;
+            margin: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .messages {
+            height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+        .message {
+            margin: 10px 0;
+        }
+        .message .username {
+            font-weight: bold;
+        }
+        .input-container {
+            display: flex;
+        }
+        .input-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .input-container button {
+            padding: 10px;
+            border: none;
+            background-color: #5cb85c;
+            color: white;
+            border-radius: 4px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+      	
+      	#update-username {
+      		margin-right: 10px;
+      	}
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+      <!-- BEGIN: Powered by Supercounters.com -->
+<center><script type="text/javascript" src="//widget.supercounters.com/ssl/online_i.js"></script><script type="text/javascript">sc_online_i(1699360,"ffffff","e61c1c");</script><br><noscript><a href="https://www.supercounters.com/">free online counter</a></noscript>
+  <!-- END: Powered by Supercounters.com -->
+</center>
+  		<!--<p>Please <a href="https://linkh.at/212440332413" target="_blank">make music</a> to share with everyone</p>--!>
+        <h1>Chatroom</h1>
+        <div class="messages" id="messages" wrap="off">
+  		</div>
+        <div class="input-container">
+            <input type="text" id="username" placeholder="Enter your name">
+            <button id="update-username" onclick="updateUsername()">Update</button>
+            <input type="text" id="message" placeholder="Type a message" maxlength="104729">
+            <button id="send">Send</button>
+            <button id="clear" onclick="clearMessages()">Clear</button>
+            <button id="share" onclick="shareLink()">Share</button>
+            <button onclick="openLink()">Make music</button>
+        </div>
+
+
+    </div>
+    <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBos64zkDTR7UImdF3eGZ8Jq-mVzMknktI",
+        authDomain: "shinys-chatroom.firebaseapp.com",
+        projectId: "shinys-chatroom",
+        storageBucket: "",
+        messagingSenderId: "285664099692",
+        appId: "1:285664099692:web:5a7f82ea26b5c0d6e507b4",
+        measurementId: "G-5C3KJZ9LMN"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    
+    const roomName = 'room-1';
+    
+    database.ref(roomName).set({
+        messages: []
+    });
+    
+    database.ref(roomName).on('value', function(snapshot) {
+        const messages = snapshot.val();
+        if (messages) {
+            Object.keys(messages).forEach(function(key) {
+                const message = messages[key];
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message');
+                messageElement.innerHTML = `<span class="username">${message.username}:</span> ${message.message}`;
+                document.getElementById('messages').appendChild(messageElement);
+            });
+        }
+    });
+
+    document.getElementById('send').addEventListener('click', function() {
+        const username = document.getElementById('username').value;
+        const message = document.getElementById('message').value;
+        if (username && message) {
+            const messageData = {
+                username: username,
+                message: message
+            };
+            database.ref('messages').push(messageData);
+            document.getElementById('message').value = '';
+        }
+    });
+
+    database.ref('messages').on('child_added', function(snapshot) {
+        const message = snapshot.val();
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.innerHTML = `<span class="username">${message.username}:</span> ${message.message}`;
+        document.getElementById('messages').appendChild(messageElement);
+    });
+    
+    function clearMessages() {
+        database.ref('messages').remove();
+        document.getElementById('messages').innerHTML = '';
+    }
+    
+    localStorage.getItem('username') || localStorage.setItem('username', 'Anonymous');
+    document.getElementById('username').value = localStorage.getItem('username');
+    
+	function updateUsername() {
+        const username = document.getElementById('username').value;
+        localStorage.setItem('username', username);
+    }
+    
+	function shareLink() {
+        const link = window.location.href;
+        navigator.clipboard.writeText(link);
+        alert('Link copied to clipboard');
+    }
+    
+    function scrollBottom() {
+        const messages = document.getElementById('messages');
+        messages.scrollTop = messages.scrollHeight;
+    }
+    
+    scrollBottom();
+    
+    function getExpiryMessage(hours) {
+        const now = new Date();
+        const expiry = new Date(now.getTime() + hours * 60 * 60 * 1000);
+        return expiry.toUTCString();
+    }
+    
+    getExpiryMessage(60);
+    
+    function openLink() {
+        window.open('https://tinylink.at/4b76', '_blank');
+    }
+    </script>
+</body>
+</html>
+
+
+<script defer data-domain="html.cafe" src="https://milkymouse.com/js/script.js"></script>
