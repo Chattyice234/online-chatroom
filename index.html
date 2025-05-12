@@ -8,8 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Sawarabi+Gothic&display=swap');
-    
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f4f4f4;
@@ -31,6 +29,9 @@
             margin-bottom: 20px;
             padding: 10px;
         }
+        .messages img {
+            display: none !important;
+        }
         .message {
             margin: 10px 0;
         }
@@ -51,7 +52,7 @@
             transition: 0.3s all ease;
         }
         .input-container input:focus {
-          border: 2px solid #5cb85c;
+            border: 2px solid #5cb85c;
         }
         .input-container button {
             font-family: 'Poppins', sans-serif;
@@ -64,29 +65,23 @@
             cursor: pointer;
             transition: 0.3s all ease;
         }
-        
-        .input-container button:hover{
-          background-color: #006400;
-          transform: scale(1.05);
+        .input-container button:hover {
+            background-color: #006400;
+            transform: scale(1.05);
         }
-        
         .input-container button:active {
-          background-color: #0F2310;
-          transform: scale(0.95);
+            background-color: #0F2310;
+            transform: scale(0.95);
         }
-      	
-      	#update-username {
-      		margin-right: 10px;
-      	}
+        #update-username {
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
-</center>
-  		<!--<p>Please <a href="https://linkh.at/212440332413" target="_blank">make music</a> to share with everyone</p>--!>
         <h1>Chatroom</h1>
-        <div class="messages" id="messages" wrap="off">
-  		</div>
+        <div class="messages" id="messages" wrap="off"></div>
         <div class="input-container">
             <input type="text" id="username" placeholder="Enter your name">
             <button id="update-username" onclick="updateUsername()">Update</button>
@@ -95,100 +90,94 @@
             <button id="clear" onclick="clearMessages()">Clear</button>
             <button id="share" onclick="shareLink()">Share</button>
         </div>
-
-
     </div>
     <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBos64zkDTR7UImdF3eGZ8Jq-mVzMknktI",
-        authDomain: "shinys-chatroom.firebaseapp.com",
-        projectId: "shinys-chatroom",
-        storageBucket: "",
-        messagingSenderId: "285664099692",
-        appId: "1:285664099692:web:5a7f82ea26b5c0d6e507b4",
-        measurementId: "G-5C3KJZ9LMN"
-    };
-    
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    
-    const roomName = 'room-1';
-    
-    database.ref(roomName).set({
-        messages: []
-    });
-    
-    database.ref(roomName).on('value', function(snapshot) {
-        const messages = snapshot.val();
-        if (messages) {
-            Object.keys(messages).forEach(function(key) {
-                const message = messages[key];
+        const firebaseConfig = {
+            apiKey: "AIzaSyBos64zkDTR7UImdF3eGZ8Jq-mVzMknktI",
+            authDomain: "shinys-chatroom.firebaseapp.com",
+            projectId: "shinys-chatroom",
+            storageBucket: "",
+            messagingSenderId: "285664099692",
+            appId: "1:285664099692:web:5a7f82ea26b5c0d6e507b4",
+            measurementId: "G-5C3KJZ9LMN"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const roomName = 'room-1';
+
+        let firebaseListenerAdded = false;
+
+        function sanitizeInput(input) {
+            const div = document.createElement('div');
+            div.textContent = input; 
+            return div.innerHTML; 
+        }
+
+        document.getElementById('username').addEventListener('paste', (event) => {
+            event.preventDefault();
+        });
+
+        document.getElementById('message').addEventListener('paste', (event) => {
+            event.preventDefault();
+        });
+
+        function sendMessage() {
+            const username = document.getElementById('username').value;
+            let message = document.getElementById('message').value;
+
+            if (username && message) {
+                message = sanitizeInput(message);
+                const messageData = {
+                    username: username,
+                    message: message
+                };
+
+                database.ref(roomName + '/messages').push(messageData);
+                document.getElementById('message').value = '';
+            }
+        }
+
+        document.getElementById('send').addEventListener('click', function(event) {
+            event.preventDefault();
+            sendMessage();
+        });
+
+        if (!firebaseListenerAdded) {
+            firebaseListenerAdded = true;
+
+            database.ref(roomName + '/messages').on('child_added', function(snapshot) {
+                const message = snapshot.val();
                 const messageElement = document.createElement('div');
                 messageElement.classList.add('message');
                 messageElement.innerHTML = `<span class="username">${message.username}:</span> ${message.message}`;
                 document.getElementById('messages').appendChild(messageElement);
+
+                scrollBottom();
             });
         }
-    });
 
-    document.getElementById('send').addEventListener('click', function() {
-        const username = document.getElementById('username').value;
-        const message = document.getElementById('message').value;
-        if (username && message) {
-            const messageData = {
-                username: username,
-                message: message
-            };
-            database.ref('messages').push(messageData);
-            document.getElementById('message').value = '';
+        function clearMessages() {
+            database.ref(roomName + '/messages').remove();
+            document.getElementById('messages').innerHTML = '';
         }
-    });
 
-    database.ref('messages').on('child_added', function(snapshot) {
-        const message = snapshot.val();
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message');
-        messageElement.innerHTML = `<span class="username">${message.username}:</span> ${message.message}`;
-        document.getElementById('messages').appendChild(messageElement);
-    });
-    
-    function clearMessages() {
-        database.ref('messages').remove();
-        document.getElementById('messages').innerHTML = '';
-    }
-    
-    localStorage.getItem('username') || localStorage.setItem('username', 'Anonymous');
-    document.getElementById('username').value = localStorage.getItem('username');
-    
-	function updateUsername() {
-        const username = document.getElementById('username').value;
-        localStorage.setItem('username', username);
-    }
-    
-	function shareLink() {
-        const link = window.location.href;
-        navigator.clipboard.writeText(link);
-        alert('Link copied to clipboard');
-    }
-    
-    function scrollBottom() {
-        const messages = document.getElementById('messages');
-        messages.scrollTop = messages.scrollHeight;
-    }
-    
-    scrollBottom();
-    
-    function getExpiryMessage(hours) {
-        const now = new Date();
-        const expiry = new Date(now.getTime() + hours * 60 * 60 * 1000);
-        return expiry.toUTCString();
-    }
-    
-    getExpiryMessage(60);
+        function updateUsername() {
+            const username = document.getElementById('username').value;
+            localStorage.setItem('username', username);
+        }
+
+        function shareLink() {
+            const link = window.location.href;
+            navigator.clipboard.writeText(link);
+            alert('Link copied to clipboard');
+        }
+
+        function scrollBottom() {
+            const messages = document.getElementById('messages');
+            messages.scrollTop = messages.scrollHeight;
+        }
     </script>
 </body>
 </html>
-
-
-<script defer data-domain="html.cafe" src="https://milkymouse.com/js/script.js"></script>
